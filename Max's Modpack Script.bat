@@ -11,7 +11,9 @@ REM Set title of window and show disclaimer.
 
 
 title Max^'s Modpack Script
-set currentScriptVersion=1
+
+REM Check if I am the latest version of myself.
+set currentScriptVersion=2
 curl --silent https://pastebin.com/raw/ngYCTTva --output scriptVersion.txt
 set /p latestScriptVersion=< scriptVersion.txt
 del scriptVersion.txt
@@ -24,10 +26,14 @@ if !currentScriptVersion! == !latestScriptVersion! (
 ) else (
 	if !currentScriptVersion! lss !latestScriptVersion! (
 		echo [41;37mA new script version is available and you must update^^!
+		timeout 2 /nobreak >nul
+		start "" "https://maxshub.notion.site/Install-the-Modpack-5500e2aa31ee49dbb536e4101663aa95?pvs=4"
 		echo This script will close in ten seconds.                [0m
 	) else (
 		echo [41;37mThere was an error and your copy of the script may be
 		echo faulty. Please redownload the script^^!                
+		timeout 2 /nobreak >nul
+		start "" "https://maxshub.notion.site/Install-the-Modpack-5500e2aa31ee49dbb536e4101663aa95?pvs=4"
 		echo This script will close in ten seconds.               [0m
 	)
 	timeout 10 /nobreak
@@ -260,7 +266,7 @@ if not exist %USERPROFILE%\AppData\Roaming\.minecraft\versions\1.20.1-forge-47.2
 ) else (
 	echo [92mForge found^^![0m
 )
-:checkMods
+:checkModsFolder
 echo Checking if you have a mods folder...
 if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods (
 	:noModsFolder
@@ -343,7 +349,9 @@ if exist modpackversion.txt (
 	echo Error^^! Could not find modpackversion.txt^^!
 	set "current=unknown"
 )
-echo [92mFinished![0m
+echo.
+echo [92mFinished^^![0m
+timeout 1 /nobreak >nul
 
 cls
 echo [42;97m Ready^^! [0m
@@ -354,7 +362,7 @@ echo Latest: [92m!latest![93m
 if !current! == unknown (
 	echo [33mThere was an error checking your modpack version. If you are
 	echo installing this modpack for the first time, this is normal^^!
-	echo If you've already installed then something is wrong. Please
+	echo If you've installed before then something is wrong. Please
 	echo type "update" to check for any issues.[0m
 ) else (
 	if !current! == !latest! (
@@ -366,10 +374,8 @@ if !current! == unknown (
 	)
 )
 echo.
-echo Would you like to install or update the modpack^?
-echo.
-echo Type "install" or "update".
-set /p "input=[33mI'd like to [93m"
+echo Press any key to begin^^!
+pause >nul
 
 cls
 echo [32mGetting latest modpack info...[0m
@@ -384,20 +390,147 @@ set /a count=!count!/2
 echo [92mGot latest modpack info^^! Version: !latest! - Mods: !count![0m
 timeout 1 /nobreak >nul
 echo.
-if !input! == install (
-	echo [32mBegin download...[0m
-	REM Create a special count variable that we will use to determine whether we are looking at a jar name or a download URL.
-	set i=1
-	REM Loop through every line in the modlist file.
-	for /f "usebackq tokens=*" %%a in ("modlist.txt") do (
-		if !i! equ 1 (
-			set mod=%%a
+
+REM Compare current mods folder to master list.
+cls
+echo [42;97m Comparing... [0m
+echo.
+REM Create file that lists every .jar currently in the mods folder.
+dir /b *.jar > installedmods.txt
+set count=0
+set old=0
+set new=0
+set i=1
+REM Find any mods in the master list that aren't currently in the mods folder. Add missing mods and their URL to newmods.txt.
+for /f "delims=" %%j in (modlist.txt) do (
+	REM On a .jar line, set mod variable to current .jar filename.
+	if !i! equ 1 (
+		set mod=%%j
+	)
+	REM On a URL line, set URL variable to current URL.
+	if !i! equ 2 (
+		set URL=%%j
+		REM Check if that mod exists. If it doesn't, add the mod .jar and URL to newmods.txt.
+		echo [32mChecking for !mod![0m
+		if exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
+			echo [32mFound !mod![0m
 		) else (
-			set URL=%%a
+			echo [92mMissing Mod Found: [93m!mod![0m
+			set /a count+=1
+			set /a new+=1
+			echo !mod! >> newmods.txt
+			echo !url! >> newmods.txt
+		)
+	)
+	REM Increment our count variable, but make sure it's only 1 or 2.
+	set /a i+=1
+	if !i! equ 3 set i=1
+)
+
+REM Find any mods in the mods folder that aren't in the master list. Add their filenames to oldmods.txt.
+for /f "delims=" %%j in (installedmods.txt) do (
+	set mod=%%j
+	findstr /c:"%%j" modlist.txt >nul
+	if errorlevel 1 (
+		echo [91mOld Mod Found: [93m%%j[0m
+		set /a count+=1
+		set /a old+=1
+		echo %%j >> oldmods.txt
+	)
+)
+echo.
+echo Finished comparing^^!
+timeout 1 /nobreak >nul
+if !count! == 0 (
+	goto :finishedNoChanges
+)
+
+REM Show which mods will be deleted and/or downloaded.
+cls
+echo.
+if !old! GTR 0 (
+	for /f "delims=" %%j in (oldmods.txt) do (
+		echo [31mDelete: %%j[0m
+	)
+)
+set i=1
+if !new! GTR 0 (
+	for /f "delims=" %%j in (newmods.txt) do (
+		if !i! equ 1 (
+			set mod=%%j
+		)
+		if !i! equ 2 (
+			echo [32mInstall: !mod![0m
+		)
+		set /a i+=1
+		if !i! equ 3 set i=1
+	)
+)
+echo.
+echo Your mods folder is not compatible with the server^^!
+echo The actions above will be performed. Review before proceeding.
+echo Press any key to continue...
+pause >nul
+
+echo Getting ready to update.
+set "somethingwentwrong=false"
+echo Making sure that doesn't already exist...
+if exist downloadfailed.txt del downloadfailed.txt
+if exist deletefailed.txt del deletefailed.txt
+echo Ready!
+
+REM Delete old mods listed in oldmods.txt.
+if !old! GTR 0 (
+	cls
+	echo [41;97m Deleting Old Mods... [0m
+	for /F "tokens=*" %%A in (oldmods.txt) do (
+		echo [91m Deleting %%A[0m
+		del %%A
+		if exist %%a (
+			echo [31mCouldn't delete !%%a![0m
+			echo [33mAttempting to delete again...[0m
+			del %%a
+			if exist %%a (
+				echo [41;97m[ERROR^^!] !%%a! failed to download^^![0m
+				echo %%A >> deletefailed.txt
+				set "somethingwentwrong=true"
+			) else (
+				echo [92mDeleted !%%a![0m
+			)
+		) else (
+			echo [92mDeleted !%%a![0m
+		)
+	)
+	echo.
+	echo Finished deleting old mods.
+	timeout 2 /nobreak >nul
+)
+
+REM Download new mods in newmods.txt.
+if !new! GTR 0 (
+	cls
+	echo [42;97m Downloading New Mods... [0m
+	echo Beginning download...
+	set i=1
+	for /f "delims=" %%j in (newmods.txt) do (
+		if !i! equ 1 (
+			set mod=%%j
+		)
+		if !i! equ 2 (
+			set URL=%%j
 			echo [32mDownloading !mod![0m
 			curl !URL! --output "!mod!"
-			if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-				echo [101;93m[Error^^!] Couldn't download !mod![0m
+			if not exist !mod! (
+				echo [31mCouldn't download !mod![0m
+				echo [33mAttempting to download again...[0m
+				curl !URL! --output "!mod!"
+				if not exist !mod! (
+					echo [41;97m[ERROR^^!] !mod! failed to download^^![0m
+					echo !mod! >> downloadfailed.txt
+					set "somethingwentwrong=true"
+				) else (
+					echo [92mDownloaded !mod![0m
+				)
 			) else (
 				echo [92mDownloaded !mod![0m
 			)
@@ -405,292 +538,63 @@ if !input! == install (
 		set /a i+=1
 		if !i! equ 3 set i=1
 	)
-	echo.
-	echo [92mFinished downloading all mod downloads.[0m
-rem	timeout 3 /nobreak >nul
-	timeout 20
-	
-	cls
-	echo [43;97m Checking... [0m
-	echo I will now check to make sure all of the mods have
-	echo downloaded.
-	timeout 5 /nobreak >nul
-	echo  [32mStartingcheck...[0m
-	set missing=false
-	set somethingwentwrong=false
-	set i=1
-	for /f "usebackq tokens=*" %%a in ("modlist.txt") do (
-		if !i! equ 1 (
-			set mod=%%a
-			if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-				set missing=true
-				echo [101;93mYou are missing !mod!^^![0m
-				timeout 1 /nobreak >nul
-			) else (
-				echo [92mFound !mod!^^![0m
-			)
-		) else (
-			set URL=%%a
-			if !missing! == true (
-				echo [93mAttempting to download !mod![93m
-				curl --silent !URL! --output "!mod!"
-				if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-					echo [101;93m[Error^^!] Couldn't download !mod![0m
-					echo !mod! >> newfailed.txt
-					set somethingwentwrong=true
-				) else (
-					echo [92mDownloaded !mod![0m
-				)
-				set missing=false
-			)
-		)
-		set /a i+=1
-		if !i! equ 3 set i=1
-	)
-	echo.
-	echo [92mFinished checking![0m
-	timeout 1 /nobreak >nul
-	if !somethingwentwrong! == true (
-		cls
-		echo [101;97m[ERROR^^!] Some Mods Couldn^'t Download^^! [0m
-		echo Unfortunately, some mods weren't able to download.
-		echo Press any key to see a list of these mods.
-		pause >nul
-		for /F "tokens=*" %%A in (newfailed.txt) do (
-			echo [91m%%A[0m
-		)
-		del modlist.txt
-		del newfailed.txt
-		echo.
-		echo Press any key to finish.
-		pause >nul
-		echo Claned up temp files. Closing script...
-		timeout 2 /nobreak >nul
-		exit
-	)
-	
-	del modpackversion.txt
-	copy modpacklatest.txt modpackversion.txt
-	del modpacklatest.txt
-	cls
-	echo [42;97m Finished! [0m
-	echo All mods have been successfully installed^^!
-	echo The script has deleted any temporary files and will
-	echo close automatically.
-	timeout 10
-	exit
-) else (
-	cls
-	echo [42;97m Comparing... [0m
-	echo.
-	dir /b *.jar > installedmods.txt
-	set count=0
-	set old=0
-	set new=0
-	set i=1
-	for /f "delims=" %%j in (modlist.txt) do (
-		if !i! equ 1 (
-			set mod=%%j
-		)
-		if !i! equ 2 (
-			set URL=%%j
-			echo [32mChecking for !mod![0m
-			if exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-				echo [32mFound !mod![0m
-			) else (
-				echo [92mMissing Mod Found: [93m!mod![0m
-				set /a count+=1
-				set /a new+=1
-				echo !mod! >> newmods.txt
-				echo !url! >> newmods.txt
-			)
-		)
-		set /a i+=1
-		if !i! equ 3 set i=1
-	)
-	for /f "delims=" %%j in (installedmods.txt) do (
-		set mod=%%j
-		findstr /c:"%%j" modlist.txt >nul
-		if errorlevel 1 (
-			echo [91mOld Mod Found: [93m%%j[0m
-			set /a count+=1
-			set /a old+=1
-			echo %%j >> oldmods.txt
-		)
-	)
-	echo.
-	echo Finished comparing^^!
-	timeout 1 /nobreak >nul
-	if !count! == 0 (
-		del modpackversion.txt
-		copy modpacklatest.txt modpackversion.txt
-		del modpacklatest.txt
-		del modlist.txt
-		del installedmods.txt
-		cls
-		echo [42;97m Finished! [0m
-		echo It looks like your mods folder is up to date^^!
-		echo I've deleted any temp files and will close automatically.
-		timeout 10
-		exit
-	)
-	echo Your mods folder is not compatible with the server^^!
-	echo The following actions will be performed:
-	echo.
-	if !old! GTR 0 (
-		for /f "delims=" %%j in (oldmods.txt) do (
-			echo [31mDelete: %%j[0m
-		)
-	)
-	if !new! GTR 0 (
-		for /f "delims=" %%j in (newmods.txt) do (
-			if !i! equ 1 (
-				set mod=%%j
-			)
-			if !i! equ 2 (
-				echo [32mInstall: !mod![0m
-			)
-			set /a i+=1
-			if !i! equ 3 set i=1
-		)
-	)
-	echo.
-	echo Your mods folder is not compatible with the server^^!
-	echo The actions above will be performed.
-	echo Press any key to continue...
-	pause >nul
-	
-	if !old! GTR 0 (
-		cls
-		echo [41;97m Deleting Old Mods... [0m
-		for /F "tokens=*" %%A in (oldmods.txt) do (
-			echo [91m Deleting %%A[0m
-			del %%A
-		)
-		echo.
-		echo Finished deleting old mods.
-		timeout 2 /nobreak >nul
-	)
-	
-	if !new! GTR 0 (
-		cls
-		echo [42;97m Downloading New Mods... [0m
-		echo Beginning download...
-		set i=1
-		for /f "delims=" %%j in (newmods.txt) do (
-			if !i! equ 1 (
-				set mod=%%j
-			)
-			if !i! equ 2 (
-				set URL=%%j
-				echo [32mDownloading !mod![0m
-				curl --silent !URL! --output "!mod!"
-				if exist !mod! (
-					echo [92mDownloaded !mod![0m
-				) else (
-					echo [101;93m[Error^^!] Couldn't download !mod![0m
-				)
-			)
-			set /a i+=1
-			if !i! equ 3 set i=1
-		)
-		echo [92mFinished downloading new mods^^![0m
-		timeout 2 /nobreak >nul
-	)
-	
-	cls
-	echo [43;97m Checking... [0m
-	echo I will now check to make sure everything is updated.
-	echo If it isn't then you're fucked. :P
-	timeout 4 /nobreak >nul
-	cd /d %USERPROFILE%\AppData\Roaming\.minecraft\mods
-	echo Making sure failed.txt doesn't already exist...
-	if exist failed.txt del failed.txt
-	set missing=false
-	set "somethingwentwrong=false"
-	set i=1
-	for /f "usebackq tokens=*" %%a in ("modlist.txt") do (
-		if !i! equ 1 (
-			set mod=%%a
-			if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-				set missing=true
-				echo [101;93mYou are missing !mod!^^![0m
-				timeout 1 /nobreak >nul
-			) else (
-				echo [92mFound !mod!^^![0m
-			)
-		) else (
-			set URL=%%a
-			if !missing! == true (
-				echo Attempting to download the mod again...
-				curl !URL! --output "!mod!"
-				if not exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\!mod! (
-					echo [101;93m[Error^^!] Couldn't download !mod![0m
-					echo !mod! >> newfailed.txt
-					set "somethingwentwrong=true"
-					timeout 1 /nobreak >nul
-				)
-				set missing=false
-			)
-		)
-		set /a i+=1
-		if !i! equ 3 set i=1
-	)
-	if exist oldmods.txt (
-		for /F "tokens=*" %%A in (oldmods.txt) do (
-			if exist %USERPROFILE%\AppData\Roaming\.minecraft\mods\%%A (
-				echo %%A is still installed^^!
-				echo %%A >> oldfailed.txt
-				set "somethingwentwrong=true"
-			)
-		)
-	)
-	
-	echo.
-	echo [92mFinished checking![0m
-	timeout 1 >nul
-	
-	cls
-	echo [42;97m Cleaning Up... [0m
-	echo Deleting temp files...
-	cd /d %USERPROFILE%\AppData\Roaming\.minecraft\mods
-	del modlist.txt
-	del installedmods.txt
-	del newmods.txt
-	del oldmods.txt
-	
-	if !somethingwentwrong! == true (
-		cls
-		del modpackversion.txt
-		del modpacklatest.txt
-		echo [101;97m[ERROR^^!] Update Failed^^! [0m
-		echo.
-		if exist newfailed.txt (
-			for /f "delims=" %%j in (newfailed.txt) do (
-				echo [91m%%j failed to install^^![0m
-			)
-			del newfailed.txt
-		)
-		if exist oldfailed.txt (
-			for /f "delims=" %%j in (oldfailed.txt) do (
-				echo [91m%%j failed to uninstall^^![0m
-			)
-			del oldfailed.txt
-		)
-		echo Please take a screenshot of this and send to Loli!
-		echo Press any key to close the script.
-		pause >nul
-		exit
-	)
+	echo [92mFinished downloading new mods^^![0m
+	timeout 2 /nobreak >nul
+)
 
-	del modpackversion.txt
-	copy modpacklatest.txt modpackversion.txt
-	del modpacklatest.txt
+cls
+echo [42;97m Cleaning Up... [0m
+echo Deleting temp files...
+cd /d %USERPROFILE%\AppData\Roaming\.minecraft\mods
+del modlist.txt
+del installedmods.txt
+del newmods.txt
+del oldmods.txt
+del modpackversion.txt
+	
+if !somethingwentwrong! == true (
 	cls
-	echo [42;97m Finished! [0m
-	echo All mods have been successfully updated^^!
-	echo The script has deleted all temporary files and will
-	echo close automatically.
-	timeout 10
+	del modpacklatest.txt
+	echo [101;97m[ERROR^^!] Update Failed^^! [0m
+	echo.
+	if exist downloadfailed.txt (
+		for /f "delims=" %%j in (downloadfailed.txt) do (
+			echo [91m%%j failed to install^^![0m
+		)
+		del downloadfailed.txt
+	)
+	if exist deletefailed.txt (
+		for /f "delims=" %%j in (deletefailed.txt) do (
+			echo [91m%%j failed to uninstall^^![0m
+		)
+		del deletefailed.txt
+	)
+	echo Please take a screenshot of this and send to Max!
+	echo Press any key to close the script.
+	pause >nul
 	exit
 )
+
+:finishedMadeChanges
+copy modpacklatest.txt modpackversion.txt
+del modpacklatest.txt
+cls
+echo [42;97m Finished! [0m
+echo All mods have been successfully updated^^!
+echo The script has deleted all temporary files and will
+echo close automatically.
+timeout 10
+exit
+
+:finishedNoChanges
+del modpackversion.txt
+copy modpacklatest.txt modpackversion.txt
+del modpacklatest.txt
+del modlist.txt
+del installedmods.txt
+cls
+echo [42;97m Finished! [0m
+echo It looks like everything is up to date^^!
+echo I've deleted any temp files and will close automatically.
+timeout 10
+exit
