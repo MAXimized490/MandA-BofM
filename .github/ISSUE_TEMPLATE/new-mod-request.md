@@ -11,7 +11,8 @@ assignees: ''
 
 Please read this wiki page for help with filling out this template:
 https://github.com/MAXimized490/MandA-BofM/wiki/Mod-Requests#new-mod-request
- -->
+
+-->
 CurseForge: 
 Version: 
 Environment: 
