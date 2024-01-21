@@ -13,17 +13,17 @@
   "name": "M&ABofM",
   "author": "Max and Angela",
   "files": [
-	{
-	  "projectID": 231951,
-	  "fileID": 4782978,
-	  "required": true
-	},
-	{
-	  "projectID": 582697,
-	  "fileID": 4860698,
-	  "required": true
-	},
-	{
+    {
+      "projectID": 231951,
+      "fileID": 4782978,
+      "required": true
+    },
+    {
+      "projectID": 582697,
+      "fileID": 4860698,
+      "required": true
+    },
+    {
       "projectID": 398521,
       "fileID": 4679319,
       "required": true
