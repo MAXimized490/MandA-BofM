@@ -3,7 +3,7 @@ name: New Mod Request
 about: Use this when requesting a new mod be added to the modpack.
 title: Add modName
 labels: New Mod Request
-assignees: ''
+assignees: MAXimized490
 
 ---
 

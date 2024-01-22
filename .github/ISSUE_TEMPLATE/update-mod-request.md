@@ -2,8 +2,8 @@
 name: Update Mod Request
 about: Use this when requesting a mod be updated to a new version.
 title: Update modName
-labels: Mod Update Request
-assignees: ''
+labels: Update Mod Request
+assignees: MAXimized490
 
 ---
 
