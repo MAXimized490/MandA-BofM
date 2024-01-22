@@ -7,6 +7,6 @@ assignees: ''
 
 ---
 
-Current: 
-New: 
+Current Version: 
+New Version: 
 Comments (optional):
