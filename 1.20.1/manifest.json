@@ -10,7 +10,7 @@
   },
   "manifestType": "minecraftModpack",
   "manifestVersion": 1,
-  "name": "M&A-BofM",
+  "name": "M&A's Bundle of Modifications",
   "author": "Max and Angela",
   "files": [
     {
@@ -79,6 +79,11 @@
       "required": true
     },
     {
+      "projectID": 441647,
+      "fileID": 4793884,
+      "required": true
+    },
+    {
       "projectID": 421850,
       "fileID": 4769522,
       "required": true
@@ -105,7 +110,7 @@
     },
     {
       "projectID": 312353,
-      "fileID": 4859576,
+      "fileID": 5054389,
       "required": true
     },
     {
@@ -155,7 +160,7 @@
     },
     {
       "projectID": 499980,
-      "fileID": 5051200,
+      "fileID": 5055464,
       "required": true
     },
     {
@@ -200,7 +205,7 @@
     },
     {
       "projectID": 891324,
-      "fileID": 4843681,
+      "fileID": 5056843,
       "required": true
     },
     {
@@ -339,6 +344,16 @@
       "required": true
     },
     {
+      "projectID": 826308,
+      "fileID": 4728397,
+      "required": true
+    },
+    {
+      "projectID": 593876,
+      "fileID": 4944891,
+      "required": true
+    },
+    {
       "projectID": 255308,
       "fileID": 5030547,
       "required": true
@@ -414,6 +429,11 @@
       "required": true
     },
     {
+      "projectID": 597522,
+      "fileID": 4853031,
+      "required": true
+    },
+    {
       "projectID": 388172,
       "fileID": 5021668,
       "required": true
@@ -470,7 +490,7 @@
     },
     {
       "projectID": 240630,
-      "fileID": 4689044,
+      "fileID": 5057220,
       "required": true
     },
     {
@@ -515,7 +535,7 @@
     },
     {
       "projectID": 495476,
-      "fileID": 5024644,
+      "fileID": 5057282,
       "required": true
     },
     {
@@ -535,12 +555,17 @@
     },
     {
       "projectID": 412082,
-      "fileID": 5051175,
+      "fileID": 5053567,
       "required": true
     },
     {
       "projectID": 686058,
       "fileID": 4728359,
+      "required": true
+    },
+    {
+      "projectID": 663141,
+      "fileID": 4861503,
       "required": true
     },
     {
@@ -580,7 +605,7 @@
     },
     {
       "projectID": 629153,
-      "fileID": 4585120,
+      "fileID": 5054882,
       "required": true
     },
     {
@@ -626,6 +651,11 @@
     {
       "projectID": 439890,
       "fileID": 4929694,
+      "required": true
+    },
+    {
+      "projectID": 579564,
+      "fileID": 4702176,
       "required": true
     },
     {
